@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
+    <import resource="classpath*:model-config.xml"/>
+
+    <bean id="dataSource" class="org.h2.jdbcx.JdbcDataSource">
+        <property name="url" value="jdbc:h2:~/.h2/test"/>
+        <property name="user" value="sa"/>
+    </bean>
+
+    <bean id="grid" class="org.apache.ignite.IgniteSpringBean">
+        <property name="configuration">
+            <bean class="org.apache.ignite.configuration.IgniteConfiguration">
+                <property name="peerClassLoadingEnabled" value="true"/>
+
+                <!--<property name="clientMode" value="true"/>-->
+
+                <property name="discoverySpi">
+                    <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+                        <property name="ipFinder">
+                            <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder">
+                                <property name="addresses">
+                                    <list>
+                                        <!--
+                                            IP Address and optional port range of a remote node.
+                                            You can also optionally specify an individual port and don't set
+                                            the port range at all.
+                                        -->
+                                        <value>localhost:47500..47509</value>
+                                    </list>
+                                </property>
+                            </bean>
+                        </property>
+                    </bean>
+                </property>
+
+                <property name="cacheConfiguration">
+                    <bean class="org.apache.ignite.configuration.CacheConfiguration">
+                        <!-- Set a cache name. -->
+                        <property name="name" value="registers"/>
+
+                        <property name="atomicityMode" value="TRANSACTIONAL"/>
+
+                        <property name="indexedTypes" value="java.lang.Integer,model.Register"/>
+
+                        <property name="cacheStoreFactory">
+                            <bean class="org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory">
+                                <property name="dataSource" ref="dataSource"/>
+                                <property name="types">
+                                    <list>
+                                        <ref bean="model.register"/>
+                                    </list>
+                                </property>
+                            </bean>
+                        </property>
+
+                        <property name="readThrough" value="true"/>
+
+                        <property name="writeThrough" value="true"/>
+
+                        <property name="backups" value="1"/>
+
+                    </bean>
+                </property>
+            </bean>
+        </property>
+    </bean>
+</beans>
